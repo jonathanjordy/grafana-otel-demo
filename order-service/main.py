@@ -92,6 +92,11 @@ set_logger_provider(logger_provider)
 # ─────────────────────────────────────────────────────────────
 LoggingInstrumentor().instrument(set_logging_format=True, logger_provider=logger_provider)
 
+# Attach OTLPHandler so Python log records are forwarded to the collector
+from opentelemetry.sdk._logs import LoggingHandler as OTLPLoggingHandler
+otlp_handler = OTLPLoggingHandler(level=logging.DEBUG, logger_provider=logger_provider)
+logging.getLogger().addHandler(otlp_handler)
+
 logging.basicConfig(
     level=logging.INFO,
     format='{"time": "%(asctime)s", "level": "%(levelname)s", "service": "' + SERVICE_NAME + '", '
