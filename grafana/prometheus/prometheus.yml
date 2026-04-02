@@ -2,11 +2,6 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
-# Enable remote write receiver (so Tempo can push RED metrics into Prometheus)
-# This is what powers the "span metrics" feature — request rate, error rate, duration
-# generated automatically from traces without any extra code in your services.
-remote_write_receiver_enabled: true  # CLI flag, set via prometheus args in docker-compose
-
 scrape_configs:
   # Scrape the OTel Collector's Prometheus exporter
   - job_name: "otel-collector"
