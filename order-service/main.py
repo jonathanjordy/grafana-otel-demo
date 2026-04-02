@@ -236,7 +236,13 @@ async def create_order(order: OrderRequest):
                 pay_span.set_status(trace.StatusCode.ERROR, str(e))
                 order_errors_counter.add(1, {"reason": "payment_failed"})
                 logger.error(f"Payment failed — amount={total_price} error={e}")
-                raise HTTPException(status_code=402, detail="Payment failed")
+                return JSONResponse(
+                    status_code=402,
+                    content={
+                        "detail":   "Payment failed",
+                        "trace_id": trace_id_hex,
+                    }
+                )
 
         # ── STEP 3: Save order to database ───────────────────
         with tracer.start_as_current_span("save-order-db") as db_span:
