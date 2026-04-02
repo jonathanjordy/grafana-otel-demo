@@ -1,0 +1,167 @@
+version: "3.8"
+
+services:
+
+  # ─────────────────────────────────────────
+  # YOUR THREE MICROSERVICES
+  # ─────────────────────────────────────────
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8000:8000"
+    environment:
+      - INVENTORY_URL=http://inventory-service:8001
+      - PAYMENT_URL=http://payment-service:8002
+      - DATABASE_URL=postgresql://demo:demo@postgres:5432/demo
+      - OTEL_SERVICE_NAME=order-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=order-service,service.version=1.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks:
+      - demo-net
+
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "8001:8001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - OTEL_SERVICE_NAME=inventory-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=inventory-service,service.version=1.0.0
+    depends_on:
+      - redis
+      - otel-collector
+    networks:
+      - demo-net
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8002:8002"
+    environment:
+      - OTEL_SERVICE_NAME=payment-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=payment-service,service.version=1.0.0
+    depends_on:
+      - otel-collector
+    networks:
+      - demo-net
+
+  # ─────────────────────────────────────────
+  # DATABASES
+  # ─────────────────────────────────────────
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: demo
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - demo-net
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - demo-net
+
+  # ─────────────────────────────────────────
+  # OPENTELEMETRY COLLECTOR
+  # ─────────────────────────────────────────
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otel/config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver (services send spans here)
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Collector's own metrics (scraped by Prometheus)
+    depends_on:
+      - tempo
+      - loki
+    networks:
+      - demo-net
+
+  # ─────────────────────────────────────────
+  # GRAFANA STACK
+  # ─────────────────────────────────────────
+
+  tempo:
+    image: grafana/tempo:2.4.0
+    command: ["-config.file=/etc/tempo/config.yaml"]
+    volumes:
+      - ./grafana/tempo/config.yaml:/etc/tempo/config.yaml
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP API (Grafana queries here)
+    networks:
+      - demo-net
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./grafana/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - demo-net
+
+  loki:
+    image: grafana/loki:2.9.0
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./grafana/loki/config.yaml:/etc/loki/config.yaml
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - demo-net
+
+  grafana:
+    image: grafana/grafana:10.3.0
+    ports:
+      - "3000:3000"   # Open http://localhost:3000  (admin / admin)
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
+    networks:
+      - demo-net
+
+# ─────────────────────────────────────────
+# VOLUMES & NETWORK
+# ─────────────────────────────────────────
+
+volumes:
+  tempo-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:
+
+networks:
+  demo-net:
+    driver: bridge
