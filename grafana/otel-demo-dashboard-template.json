@@ -1,20 +1,33 @@
 {
   "uid": "otel-demo-dashboard",
-  "title": "OTel Demo — Order System",
-  "tags": ["otel", "demo", "orders"],
+  "title": "OTel Demo \u2014 Order System",
+  "tags": [
+    "otel",
+    "demo",
+    "orders"
+  ],
   "timezone": "browser",
   "schemaVersion": 38,
   "refresh": "10s",
-  "time": { "from": "now-30m", "to": "now" },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
         "name": "service",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": "label_values(up, job)",
         "label": "Service",
-        "current": { "text": "All", "value": "$__all" },
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
         "includeAll": true,
         "multi": false,
         "refresh": 2
@@ -22,179 +35,327 @@
     ]
   },
   "panels": [
-
     {
       "id": 1,
       "type": "row",
-      "title": "🟣 Order Service",
-      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 },
+      "title": "\ud83d\udfe3 Order Service",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
       "collapsed": false
     },
-
     {
       "id": 2,
       "title": "Order Rate (req/min)",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 1, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
           "unit": "reqpm"
         }
       },
-      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list" } },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list"
+        }
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "rate(demo_orders_total[1m]) * 60",
-          "legendFormat": "orders/min — {{status}}"
+          "legendFormat": "orders/min \u2014 {{status}}"
         }
       ]
     },
-
     {
       "id": 3,
       "title": "Order Error Rate (%)",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 8, "y": 1, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "red", "mode": "fixed" },
-          "custom": { "lineWidth": 2, "fillOpacity": 15 },
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 15
+          },
           "unit": "percent",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red", "value": 15 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
             ]
           }
         }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "100 * rate(demo_order_errors_total[1m]) / (rate(demo_orders_total[1m]) + rate(demo_order_errors_total[1m]))",
           "legendFormat": "error rate %"
         }
       ]
     },
-
     {
       "id": 4,
       "title": "Order Duration (p50 / p95 / p99)",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 16, "y": 1, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": { "lineWidth": 2, "fillOpacity": 5 },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5
+          },
           "unit": "s"
         }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "histogram_quantile(0.50, rate(demo_order_duration_seconds_bucket[2m]))",
           "legendFormat": "p50"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "histogram_quantile(0.95, rate(demo_order_duration_seconds_bucket[2m]))",
           "legendFormat": "p95"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "histogram_quantile(0.99, rate(demo_order_duration_seconds_bucket[2m]))",
           "legendFormat": "p99"
         }
       ]
     },
-
     {
       "id": 10,
       "type": "row",
-      "title": "🟢 Inventory Service",
-      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 1 },
+      "title": "\ud83d\udfe2 Inventory Service",
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 1
+      },
       "collapsed": false
     },
-
     {
       "id": 11,
       "title": "Cache Hit vs Miss",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 10, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
           "unit": "short"
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "cache hits/min" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "cache misses/min" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cache hits/min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cache misses/min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
         ]
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "rate(demo_inventory_cache_hits_total[1m]) * 60",
           "legendFormat": "cache hits/min"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "rate(demo_inventory_cache_misses_total[1m]) * 60",
           "legendFormat": "cache misses/min"
         }
       ]
     },
-
     {
       "id": 12,
       "title": "Inventory Lookup Duration (p50 / p95)",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 8, "y": 10, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 10,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": { "lineWidth": 2, "fillOpacity": 5 },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5
+          },
           "unit": "s",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.5 },
-              { "color": "red", "value": 1.5 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 1.5
+              }
             ]
           }
         }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "histogram_quantile(0.50, rate(demo_inventory_lookup_duration_seconds_bucket[2m]))",
           "legendFormat": "p50"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "histogram_quantile(0.95, rate(demo_inventory_lookup_duration_seconds_bucket[2m]))",
-          "legendFormat": "p95 — spikes here = slow query demo"
+          "legendFormat": "p95 \u2014 spikes here = slow query demo"
         }
       ]
     },
-
     {
       "id": 13,
       "title": "Cache Hit Rate (%)",
       "type": "gauge",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 16, "y": 10, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 10,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -203,128 +364,242 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red",    "value": null },
-              { "color": "yellow", "value": 50 },
-              { "color": "green",  "value": 80 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 80
+              }
             ]
           }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": true },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "showThresholdLabels": true
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "100 * rate(demo_inventory_cache_hits_total[5m]) / (rate(demo_inventory_cache_hits_total[5m]) + rate(demo_inventory_cache_misses_total[5m]))",
           "legendFormat": "hit rate"
         }
       ]
     },
-
     {
       "id": 20,
       "type": "row",
-      "title": "🔴 Payment Service",
-      "gridPos": { "x": 0, "y": 18, "w": 24, "h": 1 },
+      "title": "\ud83d\udd34 Payment Service",
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 1
+      },
       "collapsed": false
     },
-
     {
       "id": 21,
       "title": "Payment Success vs Failures",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 19, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
           "unit": "short"
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "successful payments/min" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "failed payments/min" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "successful payments/min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failed payments/min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
         ]
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "rate(demo_payments_total{status='success'}[1m]) * 60",
           "legendFormat": "successful payments/min"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "rate(demo_payment_failures_total[1m]) * 60",
           "legendFormat": "failed payments/min"
         }
       ]
     },
-
     {
       "id": 22,
       "title": "Payment Failure Rate (%)",
       "type": "timeseries",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 8, "y": 19, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "red", "mode": "fixed" },
-          "custom": { "lineWidth": 2, "fillOpacity": 15 },
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 15
+          },
           "unit": "percent",
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green",  "value": null },
-              { "color": "yellow", "value": 5 },
-              { "color": "red",    "value": 15 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
             ]
           }
         }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "100 * rate(demo_payment_failures_total[1m]) / (rate(demo_payments_total[1m]) + rate(demo_payment_failures_total[1m]))",
-          "legendFormat": "failure rate % — should hover ~10%"
+          "legendFormat": "failure rate % \u2014 should hover ~10%"
         }
       ]
     },
-
     {
       "id": 23,
       "title": "Payment Amount Distribution",
       "type": "histogram",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 16, "y": 19, "w": 8, "h": 8 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
           "unit": "currencyUSD"
         }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "rate(demo_payment_amount_dollars_bucket[5m])",
           "legendFormat": "{{le}}"
         }
       ]
     },
-
     {
       "id": 30,
       "type": "row",
-      "title": "📋 Logs (Loki) — click trace_id to jump to Tempo",
-      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 1 },
+      "title": "\ud83d\udccb Logs (Loki) \u2014 click trace_id to jump to Tempo",
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 1
+      },
       "collapsed": false
     },
-
     {
       "id": 31,
       "title": "All Service Logs",
       "type": "logs",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 10 },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 10
+      },
       "options": {
         "dedupStrategy": "none",
         "enableLogDetails": true,
@@ -336,19 +611,33 @@
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "loki" },
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
           "expr": "{job=~\".+\"}",
-          "legendFormat": ""
+          "legendFormat": "",
+          "refId": "A",
+          "editorMode": "code",
+          "queryType": "range",
+          "maxLines": 200
         }
       ]
     },
-
     {
       "id": 32,
       "title": "Error Logs Only",
       "type": "logs",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 8 },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 24,
+        "h": 8
+      },
       "options": {
         "dedupStrategy": "none",
         "enableLogDetails": true,
@@ -359,154 +648,304 @@
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=~\".+\"} | json | level = \"ERROR\"",
-          "legendFormat": ""
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{level=\"ERROR\"}",
+          "legendFormat": "",
+          "refId": "A",
+          "editorMode": "code",
+          "queryType": "range",
+          "maxLines": 200
         }
       ]
     },
-
     {
       "id": 40,
       "type": "row",
-      "title": "🔍 Traces (Tempo) — search & explore",
-      "gridPos": { "x": 0, "y": 46, "w": 24, "h": 1 },
+      "title": "\ud83d\udd0d Traces (Tempo) \u2014 search & explore",
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 24,
+        "h": 1
+      },
       "collapsed": false
     },
-
     {
       "id": 41,
       "title": "Service Map",
       "type": "nodeGraph",
-      "datasource": { "type": "tempo", "uid": "tempo" },
-      "gridPos": { "x": 0, "y": 47, "w": 12, "h": 10 },
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 12,
+        "h": 10
+      },
       "targets": [
         {
-          "datasource": { "type": "tempo", "uid": "tempo" },
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
           "queryType": "serviceMap"
         }
       ]
     },
-
     {
       "id": 42,
-      "title": "Trace Search — paste a trace_id here",
+      "title": "Trace Search \u2014 paste a trace_id here",
       "type": "table",
-      "datasource": { "type": "tempo", "uid": "tempo" },
-      "gridPos": { "x": 12, "y": 47, "w": 12, "h": 10 },
-      "fieldConfig": {
-        "defaults": { "custom": { "filterable": true } }
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
       },
-      "options": { "footer": { "enablePagination": true } },
+      "gridPos": {
+        "x": 12,
+        "y": 47,
+        "w": 12,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "filterable": true
+          }
+        }
+      },
+      "options": {
+        "footer": {
+          "enablePagination": true
+        }
+      },
       "targets": [
         {
-          "datasource": { "type": "tempo", "uid": "tempo" },
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
           "queryType": "traceql",
           "query": "{ .service.name =~ \"order-service|inventory-service|payment-service\" }",
           "limit": 20
         }
       ]
     },
-
     {
       "id": 50,
       "type": "row",
-      "title": "📊 Summary Stats",
-      "gridPos": { "x": 0, "y": 57, "w": 24, "h": 1 },
+      "title": "\ud83d\udcca Summary Stats",
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 24,
+        "h": 1
+      },
       "collapsed": false
     },
-
     {
       "id": 51,
       "title": "Total Orders",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 58, "w": 6, "h": 4 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 58,
+        "w": 6,
+        "h": 4
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
           "unit": "short",
-          "thresholds": { "steps": [{ "color": "purple", "value": null }] }
+          "thresholds": {
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["sum"] }, "colorMode": "background" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ]
+        },
+        "colorMode": "background"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "increase(demo_orders_total[24h])",
           "legendFormat": "orders (24h)"
         }
       ]
     },
-
     {
       "id": 52,
       "title": "Total Payment Failures",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 6, "y": 58, "w": 6, "h": 4 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 58,
+        "w": 6,
+        "h": 4
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "red", "mode": "fixed" },
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
           "unit": "short",
-          "thresholds": { "steps": [{ "color": "red", "value": null }] }
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["sum"] }, "colorMode": "background" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ]
+        },
+        "colorMode": "background"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "increase(demo_payment_failures_total[24h])",
           "legendFormat": "failures (24h)"
         }
       ]
     },
-
     {
       "id": 53,
       "title": "Avg Order Duration",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 12, "y": 58, "w": 6, "h": 4 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 58,
+        "w": 6,
+        "h": 4
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "blue", "mode": "fixed" },
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
           "unit": "s",
-          "thresholds": { "steps": [{ "color": "blue", "value": null }] }
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "histogram_quantile(0.50, rate(demo_order_duration_seconds_bucket[5m]))",
           "legendFormat": "p50 duration"
         }
       ]
     },
-
     {
       "id": 54,
       "title": "Cache Hit Rate",
       "type": "stat",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 18, "y": 58, "w": 6, "h": 4 },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 58,
+        "w": 6,
+        "h": 4
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "green", "mode": "fixed" },
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
           "unit": "percent",
-          "thresholds": { "steps": [{ "color": "green", "value": null }] }
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "100 * rate(demo_inventory_cache_hits_total[5m]) / (rate(demo_inventory_cache_hits_total[5m]) + rate(demo_inventory_cache_misses_total[5m]))",
           "legendFormat": "cache hit %"
         }
       ]
     }
-
   ]
 }

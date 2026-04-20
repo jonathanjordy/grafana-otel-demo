@@ -76,6 +76,33 @@ services:
     networks:
       - demo-net
 
+  load-generator:
+    build: ./load-generator
+    environment:
+      - ORDER_SERVICE_URL=http://order-service:8000
+      - INVENTORY_SERVICE_URL=http://inventory-service:8001
+    depends_on:
+      - order-service
+      - inventory-service
+      - payment-service
+    restart: unless-stopped
+    networks:
+      - demo-net
+
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
+    networks:
+      - demo-net
+
   # ─────────────────────────────────────────
   # OPENTELEMETRY COLLECTOR
   # ─────────────────────────────────────────
@@ -150,20 +177,6 @@ services:
       - tempo
       - prometheus
       - loki
-    networks:
-      - demo-net
-
-  node-exporter:
-    image: prom/node-exporter:v1.7.0
-    pid: host
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - "--path.procfs=/host/proc"
-      - "--path.sysfs=/host/sys"
-      - "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
       - demo-net
 

@@ -40,9 +40,6 @@ exporters:
     default_labels_enabled:
       exporter: true
       job: true
-    resource_attributes_as_labels:
-      - service.name
-      - deployment.environment
 
   clickhouse:
     endpoint: tcp://10.184.0.14:9000
