@@ -337,7 +337,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{service_name=~\"order-service|inventory-service|payment-service\"}",
+          "expr": "{job=~\".+\"}",
           "legendFormat": ""
         }
       ]
@@ -360,7 +360,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{service_name=~\"order-service|inventory-service|payment-service\"} | json | level = \"ERROR\"",
+          "expr": "{job=~\".+\"} | json | level = \"ERROR\"",
           "legendFormat": ""
         }
       ]
