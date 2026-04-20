@@ -1,7 +1,7 @@
 # OTel Demo — Distributed Tracing with Grafana Tempo
 
 A portfolio demo of the **three pillars of observability** — metrics, logs, and traces —
-using a realistic e-commerce microservices setup.
+using a realistic e-commerce microservices setup with a ClickHouse data warehouse.
 
 ## Stack
 
@@ -9,11 +9,14 @@ using a realistic e-commerce microservices setup.
 |---|---|
 | Services | Python FastAPI (3 microservices) |
 | Instrumentation | OpenTelemetry SDK + auto-instrumentation |
+| Telemetry collector | OpenTelemetry Collector |
 | Trace storage | Grafana Tempo |
 | Metrics storage | Prometheus |
 | Log storage | Grafana Loki |
 | Visualisation | Grafana |
-| Databases | PostgreSQL + Redis |
+| Data warehouse | ClickHouse |
+| App databases | PostgreSQL + Redis |
+| Host metrics | Node Exporter |
 
 ## Project Structure
 
@@ -30,6 +33,22 @@ otel-demo/
     ├── loki/               # Log storage config
     └── provisioning/       # Auto-loads datasources + dashboard
 ```
+
+## Services
+
+| Service | Port | Role |
+|---|---|---|
+| order-service | 8000 | Entry point — POST /orders |
+| inventory-service | 8001 | Stock check with Redis cache |
+| payment-service | 8002 | Payment processing |
+| otel-collector | 4317 / 4318 | Receives and routes all telemetry |
+| prometheus | 9090 | Metrics storage |
+| loki | 3100 | Log storage |
+| tempo | 3200 | Trace storage |
+| grafana | 3000 | Visualisation UI |
+| postgres | 5432 | Orders database |
+| redis | 6379 | Stock cache |
+| node-exporter | 9100 | Host metrics (internal only) |
 
 ## Quickstart
 
@@ -84,8 +103,12 @@ curl -s -X POST http://localhost:8000/orders \
   -H "Content-Type: application/json" \
   -d '{"item_id": "laptop", "quantity": 1, "fail_payment": true}' | jq
 ```
-In Tempo the `payment-gateway-call` span is red. Click it to see the full
-exception message and attributes attached to the failing span.
+The response body includes a `trace_id` even on failure:
+```json
+{ "detail": "Payment failed", "trace_id": "a3f9c12d..." }
+```
+Copy that `trace_id` → Grafana → Explore → Tempo → paste it.
+The `payment-gateway-call` span will be red. Click it to see the full exception message and attributes.
 
 ---
 
@@ -106,6 +129,65 @@ Then in Grafana:
 3. Scroll to **Error Logs Only** panel — find a log line with `"level": "ERROR"`
 4. Click the `trace_id` value → jumps directly to the trace in Tempo
 5. See the exact red span, exception message, and all span attributes
+
+---
+
+## Telemetry Architecture
+
+```
+Your services (order / inventory / payment)
+    → OTel SDK pushes spans + metrics + logs via OTLP gRPC :4317
+        → OTel Collector receives everything
+            ├── traces   → Grafana Tempo  (waterfall view)
+            ├── metrics  → Prometheus     (dashboards + alerts)
+            ├── logs     → Grafana Loki   (log explorer)
+            └── all three → ClickHouse   (data warehouse)
+
+Node Exporter (host metrics)
+    → OTel Collector scrapes :9100
+        ├── metrics → Prometheus
+        └── metrics → ClickHouse
+```
+
+---
+
+## What's in ClickHouse
+
+All telemetry is stored in the `otel` database:
+
+| Table | Contents |
+|---|---|
+| `otel.otel_traces` | All spans from all 3 services |
+| `otel.otel_logs` | All log lines from all 3 services |
+| `otel.otel_metrics_sum` | Counters (orders_total, payment_failures_total, etc.) |
+| `otel.otel_metrics_gauge` | Gauges (node CPU, memory, disk, network) |
+| `otel.otel_metrics_histogram` | Histograms (order_duration_seconds, etc.) |
+
+Sample ClickHouse queries:
+```sql
+-- Count orders in last hour
+SELECT count() FROM otel.otel_traces
+WHERE ServiceName = 'order-service'
+AND Timestamp >= now() - INTERVAL 1 HOUR;
+
+-- Find all error logs
+SELECT Timestamp, Body FROM otel.otel_logs
+WHERE SeverityText = 'ERROR'
+ORDER BY Timestamp DESC LIMIT 20;
+
+-- Payment failure rate
+SELECT
+  toStartOfMinute(TimeUnix) as minute,
+  sum(Value) as failures
+FROM otel.otel_metrics_sum
+WHERE MetricName = 'demo_payment_failures_total'
+GROUP BY minute ORDER BY minute DESC LIMIT 30;
+
+-- Node CPU usage
+SELECT MetricName, Value FROM otel.otel_metrics_gauge
+WHERE MetricName LIKE '%node_cpu%'
+LIMIT 10;
+```
 
 ---
 
@@ -130,7 +212,8 @@ Request arrives at order-service
 ```
 
 Every log line automatically contains `trace_id` and `span_id` via
-`LoggingInstrumentor` — this is what enables the Loki → Tempo jump link in Grafana.
+`OTLPLoggingHandler` — this is what enables the Loki → Tempo jump link in Grafana
+and ensures logs are correlated with traces in ClickHouse.
 
 ---
 
