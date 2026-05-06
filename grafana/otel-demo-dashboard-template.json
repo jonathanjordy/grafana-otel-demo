@@ -792,7 +792,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "increase(demo_orders_total[24h])",
+          "expr": "sum(increase(demo_orders_total[24h]))",
           "legendFormat": "orders (24h)"
         }
       ]
@@ -842,7 +842,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "increase(demo_payment_failures_total[24h])",
+          "expr": "sum(increase(demo_payment_failures_total[24h]))",
           "legendFormat": "failures (24h)"
         }
       ]
@@ -892,7 +892,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, rate(demo_order_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(demo_order_duration_seconds_bucket[5m])))",
           "legendFormat": "p50 duration"
         }
       ]
@@ -942,7 +942,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * rate(demo_inventory_cache_hits_total[5m]) / (rate(demo_inventory_cache_hits_total[5m]) + rate(demo_inventory_cache_misses_total[5m]))",
+          "expr": "100 * sum by (service) (rate(demo_inventory_cache_hits_total[5m])) / (sum by (service) (rate(demo_inventory_cache_hits_total[5m])) + sum by (service) (rate(demo_inventory_cache_misses_total[5m])))",
           "legendFormat": "cache hit %"
         }
       ]
