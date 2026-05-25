@@ -1,0 +1,183 @@
+{
+  "uid": "otel-demo-business",
+  "title": "Business / Product View",
+  "tags": ["otel", "demo", "business"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [{
+      "name": "item_id", "type": "query",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "query": "label_values(demo_orders_total, item_id)",
+      "label": "Item",
+      "current": { "text": "All", "value": "$__all" },
+      "includeAll": true, "multi": true, "refresh": 2
+    }]
+  },
+  "panels": [
+    { "id": 100, "type": "row", "title": "Headlines", "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 101, "type": "stat", "title": "Total orders",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 1, "w": 6, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "purple" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum(increase(demo_orders_total[$__range]))",
+        "legendFormat": "orders", "refId": "A", "instant": true
+      }]
+    },
+    {
+      "id": 102, "type": "stat", "title": "Total revenue",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 6, "y": 1, "w": 6, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 2, "color": { "mode": "fixed", "fixedColor": "green" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum(increase(demo_payment_amount_dollars_sum[$__range]))",
+        "legendFormat": "revenue", "refId": "A", "instant": true
+      }]
+    },
+    {
+      "id": 103, "type": "stat", "title": "Avg order value",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 1, "w": 6, "h": 5 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "decimals": 2, "color": { "mode": "fixed", "fixedColor": "blue" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum(increase(demo_payment_amount_dollars_sum[$__range])) / sum(increase(demo_payments_total{status=\"success\"}[$__range]))",
+        "legendFormat": "AOV", "refId": "A", "instant": true
+      }]
+    },
+    {
+      "id": 104, "type": "stat", "title": "Conversion %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 18, "y": 1, "w": 6, "h": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 1,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 80 },
+            { "color": "green", "value": 95 }
+          ] }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "100 * sum(rate(demo_orders_total[$__range])) / (sum(rate(demo_orders_total[$__range])) + sum(rate(demo_order_errors_total[$__range])))",
+        "legendFormat": "conv %", "refId": "A", "instant": true
+      }]
+    },
+
+    { "id": 200, "type": "row", "title": "Trends", "gridPos": { "x": 0, "y": 6, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 201, "type": "timeseries", "title": "Orders per hour",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 7, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "short", "color": { "mode": "fixed", "fixedColor": "purple" } } },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum(rate(demo_orders_total[5m])) * 3600",
+        "legendFormat": "orders/hr", "refId": "A"
+      }]
+    },
+    {
+      "id": 202, "type": "timeseries", "title": "Revenue per hour",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 7, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "currencyUSD", "color": { "mode": "fixed", "fixedColor": "green" } } },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum(rate(demo_payment_amount_dollars_sum[5m])) * 3600",
+        "legendFormat": "$/hr", "refId": "A"
+      }]
+    },
+    {
+      "id": 203, "type": "timeseries", "title": "Failure reasons (stacked)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 7, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 1, "fillOpacity": 70, "stacking": { "mode": "normal" } }, "unit": "reqpm", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (reason) (rate(demo_payment_failures_total[5m])) * 60",
+        "legendFormat": "{{reason}}", "refId": "A"
+      }]
+    },
+
+    { "id": 300, "type": "row", "title": "Per-item", "gridPos": { "x": 0, "y": 15, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 301, "type": "table", "title": "Top items by orders",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 10 },
+      "fieldConfig": { "defaults": { "custom": { "align": "right" } } },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "topk(10, sum by (item_id) (increase(demo_orders_total[$__range])))",
+        "legendFormat": "{{item_id}}", "refId": "A", "format": "table", "instant": true
+      }],
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true } } }]
+    },
+    {
+      "id": 302, "type": "table", "title": "Top items by revenue",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 10 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "custom": { "align": "right" } } },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "topk(10, sum by (item_id) (increase(demo_payment_amount_dollars_sum[$__range])))",
+        "legendFormat": "{{item_id}}", "refId": "A", "format": "table", "instant": true
+      }],
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true } } }]
+    },
+    {
+      "id": 303, "type": "table", "title": "Top items by payment failure",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 10 },
+      "fieldConfig": { "defaults": { "custom": { "align": "right" } } },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "topk(10, sum by (item_id) (increase(demo_payment_failures_total[$__range])))",
+        "legendFormat": "{{item_id}}", "refId": "A", "format": "table", "instant": true
+      }],
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true } } }]
+    },
+
+    { "id": 400, "type": "row", "title": "Payment amount distribution", "gridPos": { "x": 0, "y": 26, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 401, "type": "histogram", "title": "Distribution (last 5m)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 27, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "color": { "mode": "fixed", "fixedColor": "purple" } } },
+      "options": { "legend": { "displayMode": "hidden" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (le) (rate(demo_payment_amount_dollars_bucket[5m]))",
+        "legendFormat": "{{le}}", "refId": "A", "format": "heatmap"
+      }]
+    },
+    {
+      "id": 402, "type": "heatmap", "title": "Amount distribution over time",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 27, "w": 12, "h": 8 },
+      "options": { "calculate": false, "cellGap": 1, "yAxis": { "axisLabel": "$" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (le) (rate(demo_payment_amount_dollars_bucket[2m]))",
+        "legendFormat": "{{le}}", "refId": "A", "format": "heatmap"
+      }]
+    }
+  ]
+}

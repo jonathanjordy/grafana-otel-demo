@@ -1,0 +1,281 @@
+{
+  "uid": "otel-demo-dev-payment",
+  "title": "Dev — Payment Service",
+  "tags": ["otel", "demo", "dev", "payment-service"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [{
+      "name": "item_id", "type": "query",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "query": "label_values(demo_payments_total, item_id)",
+      "label": "Item",
+      "current": { "text": "All", "value": "$__all" },
+      "includeAll": true, "multi": true, "refresh": 2
+    }]
+  },
+  "panels": [
+    { "id": 100, "type": "row", "title": "Identity", "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 101, "type": "stat", "title": "RPS",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 2, "color": { "mode": "fixed", "fixedColor": "red" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum(rate(demo_http_server_duration_milliseconds_count{service_name=\"payment-service\"}[1m]))",
+        "legendFormat": "rps", "refId": "A"
+      }]
+    },
+    {
+      "id": 102, "type": "stat", "title": "Failure %",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 4, "y": 1, "w": 4, "h": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5 },
+            { "color": "red", "value": 15 }
+          ] }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "100 * sum(rate(demo_payment_failures_total[5m])) / (sum(rate(demo_payments_total[5m])) + sum(rate(demo_payment_failures_total[5m])))",
+        "legendFormat": "fail %", "refId": "A"
+      }],
+      "description": "Baseline ~10% due to built-in random failure. Yellow = normal, Red = anomaly."
+    },
+    {
+      "id": 103, "type": "stat", "title": "p50 latency",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 1, "w": 4, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 3, "color": { "mode": "fixed", "fixedColor": "green" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "histogram_quantile(0.50, sum by(le) (rate(demo_payment_duration_seconds_bucket[5m])))",
+        "legendFormat": "p50", "refId": "A"
+      }]
+    },
+    {
+      "id": 104, "type": "stat", "title": "p95 latency",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 1, "w": 4, "h": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 3,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.5 },
+            { "color": "red", "value": 2 }
+          ] }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "histogram_quantile(0.95, sum by(le) (rate(demo_payment_duration_seconds_bucket[5m])))",
+        "legendFormat": "p95", "refId": "A"
+      }]
+    },
+    {
+      "id": 105, "type": "stat", "title": "p99 latency",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 1, "w": 4, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 3, "color": { "mode": "fixed", "fixedColor": "red" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "histogram_quantile(0.99, sum by(le) (rate(demo_payment_duration_seconds_bucket[5m])))",
+        "legendFormat": "p99", "refId": "A"
+      }]
+    },
+    {
+      "id": 106, "type": "stat", "title": "Uptime",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 20, "y": 1, "w": 4, "h": 4 },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "fixed", "fixedColor": "blue" } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none" },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "time() - max(process_start_time_seconds{job=\"payment-service\"})",
+        "legendFormat": "uptime", "refId": "A"
+      }]
+    },
+
+    { "id": 200, "type": "row", "title": "Endpoint breakdown (HTTP)", "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 201, "type": "timeseries", "title": "RPS by route",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "reqps", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (http_route) (rate(demo_http_server_duration_milliseconds_count{service_name=\"payment-service\"}[1m]))",
+        "legendFormat": "{{http_route}}", "refId": "A"
+      }]
+    },
+    {
+      "id": 202, "type": "timeseries", "title": "p95 latency by route",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "histogram_quantile(0.95, sum by (http_route, le) (rate(demo_http_server_duration_milliseconds_bucket{service_name=\"payment-service\"}[5m])))",
+        "legendFormat": "{{http_route}}", "refId": "A"
+      }]
+    },
+    {
+      "id": 203, "type": "timeseries", "title": "Status code mix",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 1, "fillOpacity": 70, "stacking": { "mode": "normal" } }, "unit": "reqps", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (http_status_code) (rate(demo_http_server_duration_milliseconds_count{service_name=\"payment-service\"}[1m]))",
+        "legendFormat": "{{http_status_code}}", "refId": "A"
+      }]
+    },
+    {
+      "id": 204, "type": "heatmap", "title": "Latency heatmap",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 14, "w": 12, "h": 8 },
+      "options": { "calculate": false, "cellGap": 1, "yAxis": { "axisLabel": "ms" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (le) (rate(demo_http_server_duration_milliseconds_bucket{service_name=\"payment-service\"}[2m]))",
+        "legendFormat": "{{le}}", "refId": "A", "format": "heatmap"
+      }]
+    },
+
+    { "id": 300, "type": "row", "title": "Business — payments", "gridPos": { "x": 0, "y": 22, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 301, "type": "timeseries", "title": "Payments/min by status",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 23, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "reqpm" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "success" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] },
+          { "matcher": { "id": "byName", "options": "failed" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (status) (rate(demo_payments_total[1m])) * 60",
+        "legendFormat": "{{status}}", "refId": "A"
+      }]
+    },
+    {
+      "id": 302, "type": "timeseries", "title": "Failures/min by reason",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 23, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 15, "stacking": { "mode": "normal" } }, "unit": "reqpm", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (reason) (rate(demo_payment_failures_total[1m])) * 60",
+        "legendFormat": "{{reason}}", "refId": "A"
+      }]
+    },
+    {
+      "id": 303, "type": "timeseries", "title": "p95 latency by status (success vs failed)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 31, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "s" },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "success" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] },
+          { "matcher": { "id": "byName", "options": "failed" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "histogram_quantile(0.95, sum by (status, le) (rate(demo_payment_duration_seconds_bucket[5m])))",
+        "legendFormat": "{{status}}", "refId": "A"
+      }]
+    },
+    {
+      "id": 304, "type": "histogram", "title": "Payment amount distribution",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 31, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD", "color": { "mode": "fixed", "fixedColor": "purple" } } },
+      "options": { "legend": { "displayMode": "hidden" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum by (le) (rate(demo_payment_amount_dollars_bucket[5m]))",
+        "legendFormat": "{{le}}", "refId": "A", "format": "heatmap"
+      }]
+    },
+
+    { "id": 400, "type": "row", "title": "Dependencies (via span metrics)", "gridPos": { "x": 0, "y": 39, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 401, "type": "timeseries", "title": "payment-gateway-call rate",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 40, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "reqpm", "color": { "mode": "fixed", "fixedColor": "purple" } } },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"payment-service\", span_name=\"payment-gateway-call\"}[1m])) * 60",
+        "legendFormat": "calls/min", "refId": "A"
+      }]
+    },
+    {
+      "id": 402, "type": "timeseries", "title": "payment-gateway-call p95",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 40, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "fixed", "fixedColor": "blue" } } },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "targets": [{
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"payment-service\", span_name=\"payment-gateway-call\"}[5m])))",
+        "legendFormat": "p95", "refId": "A"
+      }]
+    },
+
+    { "id": 500, "type": "row", "title": "Logs (this service)", "gridPos": { "x": 0, "y": 48, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 501, "type": "logs", "title": "Payment-service logs (click trace_id → Tempo)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "x": 0, "y": 49, "w": 24, "h": 10 },
+      "options": {
+        "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": true,
+        "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "loki" },
+        "expr": "{exporter=\"OTLP\"} | json | otelServiceName=\"payment-service\"",
+        "refId": "A", "editorMode": "code", "queryType": "range", "maxLines": 200
+      }]
+    },
+
+    { "id": 600, "type": "row", "title": "Traces (slowest recent)", "gridPos": { "x": 0, "y": 59, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 601, "type": "table", "title": "Recent traces sorted by duration",
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "gridPos": { "x": 0, "y": 60, "w": 24, "h": 10 },
+      "fieldConfig": { "defaults": { "custom": { "filterable": true } } },
+      "options": { "footer": { "enablePagination": true } },
+      "targets": [{
+        "datasource": { "type": "tempo", "uid": "tempo" },
+        "queryType": "traceql",
+        "query": "{ .service.name = \"payment-service\" } | select(traceDuration)",
+        "limit": 20, "refId": "A"
+      }]
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "uid": "otel-demo-home",
+  "title": "OTel Demo — Home",
+  "tags": ["otel", "demo", "home"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 4 },
+      "options": {
+        "mode": "markdown",
+        "content": "# OTel Demo — Order System\n\nThree Python/FastAPI microservices instrumented with OpenTelemetry. Pick a dashboard below based on what you need to see.\n\n*Default refresh: 30s. Each tile shows one live number teaser.*"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Ops Overview",
+      "description": "Health-first, RED + saturation. Designed for on-call.",
+      "gridPos": { "x": 0, "y": 4, "w": 6, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "links": [
+        { "title": "Open Ops Overview", "url": "/d/otel-demo-ops/ops-overview", "targetBlank": false }
+      ],
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "100 * sum(rate(demo_order_errors_total[5m])) / (sum(rate(demo_orders_total[5m])) + sum(rate(demo_order_errors_total[5m])))",
+          "legendFormat": "error %",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Dev — Order",
+      "description": "Debug order-service: RED, endpoints, deps, logs, traces.",
+      "gridPos": { "x": 6, "y": 4, "w": 6, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 2 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "links": [
+        { "title": "Open Dev — Order", "url": "/d/otel-demo-dev-order/dev-order-service", "targetBlank": false }
+      ],
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(demo_order_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95 latency",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Dev — Inventory",
+      "description": "Debug inventory-service: cache, lookup, deps, logs, traces.",
+      "gridPos": { "x": 12, "y": 4, "w": 6, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 80 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "links": [
+        { "title": "Open Dev — Inventory", "url": "/d/otel-demo-dev-inventory/dev-inventory-service", "targetBlank": false }
+      ],
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "100 * sum(rate(demo_inventory_cache_hits_total[5m])) / sum(rate(demo_inventory_cache_hits_total[5m]) + rate(demo_inventory_cache_misses_total[5m]))",
+          "legendFormat": "cache hit %",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Dev — Payment",
+      "description": "Debug payment-service: failures, amounts, deps, logs, traces.",
+      "gridPos": { "x": 18, "y": 4, "w": 6, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 15 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "links": [
+        { "title": "Open Dev — Payment", "url": "/d/otel-demo-dev-payment/dev-payment-service", "targetBlank": false }
+      ],
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "100 * sum(rate(demo_payment_failures_total[5m])) / (sum(rate(demo_payments_total[5m])) + sum(rate(demo_payment_failures_total[5m])))",
+          "legendFormat": "failure %",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "OTel Correlation Demo",
+      "description": "How metrics, logs and traces link together.",
+      "gridPos": { "x": 0, "y": 10, "w": 8, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "links": [
+        { "title": "Open Correlation Demo", "url": "/d/otel-demo-correlation/otel-correlation-demo", "targetBlank": false }
+      ],
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(traces_spanmetrics_calls_total[5m])) * 60",
+          "legendFormat": "spans/min",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Business / Product",
+      "description": "Orders, revenue, conversion, top items.",
+      "gridPos": { "x": 8, "y": 10, "w": 8, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqpm",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "purple" }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "textMode": "value_and_name",
+        "graphMode": "none"
+      },
+      "links": [
+        { "title": "Open Business View", "url": "/d/otel-demo-business/business-view", "targetBlank": false }
+      ],
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(demo_orders_total[1m])) * 60",
+          "legendFormat": "orders/min",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "text",
+      "title": "Legacy",
+      "gridPos": { "x": 16, "y": 10, "w": 8, "h": 6 },
+      "options": {
+        "mode": "markdown",
+        "content": "### Legacy dashboard\n\nThe original single-page dashboard is preserved for reference.\n\n[Open OTel Demo — Legacy](/d/otel-demo-legacy/otel-demo-legacy)"
+      }
+    }
+  ]
+}
