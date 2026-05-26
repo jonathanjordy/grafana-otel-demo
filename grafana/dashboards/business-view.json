@@ -85,7 +85,7 @@
       "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum(rate(demo_orders_total[5m])) * 3600",
+        "expr": "sum(rate(demo_orders_total[$__rate_interval])) * 3600",
         "legendFormat": "orders/hr", "refId": "A"
       }]
     },
@@ -97,7 +97,7 @@
       "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum(rate(demo_payment_amount_dollars_sum[5m])) * 3600",
+        "expr": "sum(rate(demo_payment_amount_dollars_sum[$__rate_interval])) * 3600",
         "legendFormat": "$/hr", "refId": "A"
       }]
     },

@@ -294,8 +294,8 @@
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "loki", "uid": "loki" },
-        "expr": "sum by (otelServiceName) (count_over_time({exporter=\"OTLP\"} | json | severity=\"ERROR\" [1m]))",
-        "legendFormat": "{{otelServiceName}}", "refId": "A"
+        "expr": "sum by (job) (count_over_time({exporter=\"OTLP\"} | json | severity=\"ERROR\" [1m]))",
+        "legendFormat": "{{job}}", "refId": "A"
       }],
       "description": "ERROR-level log lines per service per minute."
     },

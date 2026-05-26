@@ -26,7 +26,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum(rate(demo_http_server_duration_milliseconds_count{service_name=\"payment-service\"}[1m]))",
+        "expr": "sum(rate(http_server_duration_ms_count{job=\"payment-service\"}[1m]))",
         "legendFormat": "rps", "refId": "A"
       }]
     },
@@ -112,27 +112,27 @@
 
     { "id": 200, "type": "row", "title": "Endpoint breakdown (HTTP)", "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }, "collapsed": false },
     {
-      "id": 201, "type": "timeseries", "title": "RPS by route",
+      "id": 201, "type": "timeseries", "title": "RPS by method",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "reqps", "color": { "mode": "palette-classic" } } },
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum by (http_route) (rate(demo_http_server_duration_milliseconds_count{service_name=\"payment-service\"}[1m]))",
-        "legendFormat": "{{http_route}}", "refId": "A"
+        "expr": "sum by (http_method) (rate(http_server_duration_ms_count{job=\"payment-service\"}[1m]))",
+        "legendFormat": "{{http_method}}", "refId": "A"
       }]
     },
     {
-      "id": 202, "type": "timeseries", "title": "p95 latency by route",
+      "id": 202, "type": "timeseries", "title": "p95 latency by method",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "palette-classic" } } },
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "histogram_quantile(0.95, sum by (http_route, le) (rate(demo_http_server_duration_milliseconds_bucket{service_name=\"payment-service\"}[5m])))",
-        "legendFormat": "{{http_route}}", "refId": "A"
+        "expr": "histogram_quantile(0.95, sum by (http_method, le) (rate(http_server_duration_ms_bucket{job=\"payment-service\"}[5m])))",
+        "legendFormat": "{{http_method}}", "refId": "A"
       }]
     },
     {
@@ -143,7 +143,7 @@
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum by (http_status_code) (rate(demo_http_server_duration_milliseconds_count{service_name=\"payment-service\"}[1m]))",
+        "expr": "sum by (http_status_code) (rate(http_server_duration_ms_count{job=\"payment-service\"}[1m]))",
         "legendFormat": "{{http_status_code}}", "refId": "A"
       }]
     },
@@ -154,7 +154,7 @@
       "options": { "calculate": false, "cellGap": 1, "yAxis": { "axisLabel": "ms" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum by (le) (rate(demo_http_server_duration_milliseconds_bucket{service_name=\"payment-service\"}[2m]))",
+        "expr": "sum by (le) (rate(http_server_duration_ms_bucket{job=\"payment-service\"}[2m]))",
         "legendFormat": "{{le}}", "refId": "A", "format": "heatmap"
       }]
     },
@@ -223,27 +223,28 @@
 
     { "id": 400, "type": "row", "title": "Dependencies (via span metrics)", "gridPos": { "x": 0, "y": 39, "w": 24, "h": 1 }, "collapsed": false },
     {
-      "id": 401, "type": "timeseries", "title": "payment-gateway-call rate",
+      "id": 401, "type": "timeseries", "title": "Child span call rate (per span_name)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 40, "w": 12, "h": 8 },
-      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "reqpm", "color": { "mode": "fixed", "fixedColor": "purple" } } },
-      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "reqpm", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"payment-service\", span_name=\"payment-gateway-call\"}[1m])) * 60",
-        "legendFormat": "calls/min", "refId": "A"
-      }]
+        "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"payment-service\", span_name!~\"POST /charge|GET /metrics|GET /\"}[1m])) * 60",
+        "legendFormat": "{{span_name}}", "refId": "A"
+      }],
+      "description": "Internal payment-service spans (validate-charge, payment-gateway-call, record-transaction). Server-entry spans excluded."
     },
     {
-      "id": 402, "type": "timeseries", "title": "payment-gateway-call p95",
+      "id": 402, "type": "timeseries", "title": "Child span p95 latency",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 40, "w": 12, "h": 8 },
-      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "fixed", "fixedColor": "blue" } } },
-      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"payment-service\", span_name=\"payment-gateway-call\"}[5m])))",
-        "legendFormat": "p95", "refId": "A"
+        "expr": "histogram_quantile(0.95, sum by (span_name, le) (rate(traces_spanmetrics_latency_bucket{service=\"payment-service\", span_name!~\"POST /charge|GET /metrics|GET /\"}[5m])))",
+        "legendFormat": "{{span_name}}", "refId": "A"
       }]
     },
 
@@ -258,7 +259,7 @@
       },
       "targets": [{
         "datasource": { "type": "loki", "uid": "loki" },
-        "expr": "{exporter=\"OTLP\"} | json | otelServiceName=\"payment-service\"",
+        "expr": "{exporter=\"OTLP\", job=\"payment-service\"} | json",
         "refId": "A", "editorMode": "code", "queryType": "range", "maxLines": 200
       }]
     },

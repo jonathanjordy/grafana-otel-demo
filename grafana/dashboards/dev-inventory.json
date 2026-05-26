@@ -26,7 +26,7 @@
       "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum(rate(demo_http_server_duration_milliseconds_count{service_name=\"inventory-service\"}[1m]))",
+        "expr": "sum(rate(http_server_duration_ms_count{job=\"inventory-service\"}[1m]))",
         "legendFormat": "rps", "refId": "A"
       }]
     },
@@ -111,27 +111,27 @@
 
     { "id": 200, "type": "row", "title": "Endpoint breakdown (HTTP)", "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }, "collapsed": false },
     {
-      "id": 201, "type": "timeseries", "title": "RPS by route",
+      "id": 201, "type": "timeseries", "title": "RPS by method",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 10 }, "unit": "reqps", "color": { "mode": "palette-classic" } } },
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum by (http_route) (rate(demo_http_server_duration_milliseconds_count{service_name=\"inventory-service\"}[1m]))",
-        "legendFormat": "{{http_route}}", "refId": "A"
+        "expr": "sum by (http_method) (rate(http_server_duration_ms_count{job=\"inventory-service\"}[1m]))",
+        "legendFormat": "{{http_method}}", "refId": "A"
       }]
     },
     {
-      "id": 202, "type": "timeseries", "title": "p95 latency by route",
+      "id": 202, "type": "timeseries", "title": "p95 latency by method",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
       "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "palette-classic" } } },
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "histogram_quantile(0.95, sum by (http_route, le) (rate(demo_http_server_duration_milliseconds_bucket{service_name=\"inventory-service\"}[5m])))",
-        "legendFormat": "{{http_route}}", "refId": "A"
+        "expr": "histogram_quantile(0.95, sum by (http_method, le) (rate(http_server_duration_ms_bucket{job=\"inventory-service\"}[5m])))",
+        "legendFormat": "{{http_method}}", "refId": "A"
       }]
     },
     {
@@ -142,7 +142,7 @@
       "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum by (http_status_code) (rate(demo_http_server_duration_milliseconds_count{service_name=\"inventory-service\"}[1m]))",
+        "expr": "sum by (http_status_code) (rate(http_server_duration_ms_count{job=\"inventory-service\"}[1m]))",
         "legendFormat": "{{http_status_code}}", "refId": "A"
       }]
     },
@@ -153,7 +153,7 @@
       "options": { "calculate": false, "cellGap": 1, "yAxis": { "axisLabel": "ms" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "sum by (le) (rate(demo_http_server_duration_milliseconds_bucket{service_name=\"inventory-service\"}[2m]))",
+        "expr": "sum by (le) (rate(http_server_duration_ms_bucket{job=\"inventory-service\"}[2m]))",
         "legendFormat": "{{le}}", "refId": "A", "format": "heatmap"
       }]
     },
@@ -229,51 +229,39 @@
       }]
     },
     {
-      "id": 402, "type": "timeseries", "title": "Redis lookup p95",
+      "id": 402, "type": "timeseries", "title": "Redis vs DB lookup p95",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 40, "w": 12, "h": 8 },
-      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "fixed", "fixedColor": "blue" } } },
-      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "palette-classic" } } },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [{
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"inventory-service\", span_name=\"redis-cache-lookup\"}[5m])))",
-        "legendFormat": "redis p95", "refId": "A"
-      }]
-    },
-    {
-      "id": 403, "type": "timeseries", "title": "DB fallback p95",
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 48, "w": 12, "h": 8 },
-      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 5 }, "unit": "ms", "color": { "mode": "fixed", "fixedColor": "orange" } } },
-      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
-      "targets": [{
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"inventory-service\", span_name=\"db-stock-lookup\"}[5m])))",
-        "legendFormat": "db p95", "refId": "A"
+        "expr": "histogram_quantile(0.95, sum by (span_name, le) (rate(traces_spanmetrics_latency_bucket{service=\"inventory-service\", span_name=~\"redis-cache-lookup|db-stock-lookup\"}[5m])))",
+        "legendFormat": "{{span_name}}", "refId": "A"
       }]
     },
 
-    { "id": 500, "type": "row", "title": "Logs (this service)", "gridPos": { "x": 0, "y": 56, "w": 24, "h": 1 }, "collapsed": false },
+    { "id": 500, "type": "row", "title": "Logs (this service)", "gridPos": { "x": 0, "y": 48, "w": 24, "h": 1 }, "collapsed": false },
     {
       "id": 501, "type": "logs", "title": "Inventory-service logs (click trace_id → Tempo)",
       "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "x": 0, "y": 57, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 49, "w": 24, "h": 10 },
       "options": {
         "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": true,
         "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true
       },
       "targets": [{
         "datasource": { "type": "loki", "uid": "loki" },
-        "expr": "{exporter=\"OTLP\"} | json | otelServiceName=\"inventory-service\"",
+        "expr": "{exporter=\"OTLP\", job=\"inventory-service\"} | json",
         "refId": "A", "editorMode": "code", "queryType": "range", "maxLines": 200
       }]
     },
 
-    { "id": 600, "type": "row", "title": "Traces (slowest recent)", "gridPos": { "x": 0, "y": 67, "w": 24, "h": 1 }, "collapsed": false },
+    { "id": 600, "type": "row", "title": "Traces (slowest recent)", "gridPos": { "x": 0, "y": 59, "w": 24, "h": 1 }, "collapsed": false },
     {
       "id": 601, "type": "table", "title": "Recent traces sorted by duration",
       "datasource": { "type": "tempo", "uid": "tempo" },
-      "gridPos": { "x": 0, "y": 68, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 60, "w": 24, "h": 10 },
       "fieldConfig": { "defaults": { "custom": { "filterable": true } } },
       "options": { "footer": { "enablePagination": true } },
       "targets": [{
